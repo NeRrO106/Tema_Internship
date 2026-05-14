@@ -14,5 +14,7 @@ public interface UserService {
     List<UserResponse> getAllUsers();
     void changeRole(Long userId, String role);
     void deactivateUser(Long userId);
+    UserResponse getProfileByEmail(String email);
+    UserResponse updateProfileByEmail(String email, RegisterRequest request);
 
 }
