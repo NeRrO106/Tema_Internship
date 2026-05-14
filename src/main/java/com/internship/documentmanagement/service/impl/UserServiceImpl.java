@@ -114,6 +114,13 @@ public class UserServiceImpl implements UserService {
         user.setIsActive(false);
         userRepository.save(user);
     }
+    @Override
+    public void activateUser(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        user.setIsActive(true);
+        userRepository.save(user);
+    }
 
     @Override
     public UserResponse getProfileByEmail(String email) {
