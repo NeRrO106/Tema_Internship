@@ -1,5 +1,7 @@
 package com.internship.documentmanagement.controller;
 
+import com.internship.documentmanagement.dto.request.AdminActionRequest;
+import com.internship.documentmanagement.dto.request.ChangeRoleRequest;
 import com.internship.documentmanagement.dto.request.RegisterRequest;
 import com.internship.documentmanagement.dto.response.UserResponse;
 import com.internship.documentmanagement.service.UserService;
@@ -36,20 +38,20 @@ public class UserController {
     }
     @PutMapping("/{id}/role")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> changeRole(@PathVariable Long id, @RequestParam String role) {
-        userService.changeRole(id, role);
+    public ResponseEntity<Void> changeRole(@PathVariable Long id, @Valid @RequestBody ChangeRoleRequest request) {
+        userService.changeRole(id, request.getRole(), request.getReason());
         return ResponseEntity.noContent().build();
     }
     @PutMapping("/{id}/deactivate")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> deactivateUser(@PathVariable Long id) {
-        userService.deactivateUser(id);
+    public ResponseEntity<Void> deactivateUser(@PathVariable Long id, @Valid @RequestBody AdminActionRequest request) {
+        userService.deactivateUser(id, request.getReason());
         return ResponseEntity.noContent().build();
     }
     @PutMapping("/{id}/activate")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> activateUser(@PathVariable Long id) {
-        userService.activateUser(id);
+    public ResponseEntity<Void> activateUser(@PathVariable Long id, @Valid @RequestBody AdminActionRequest request) {
+        userService.activateUser(id, request.getReason());
         return ResponseEntity.noContent().build();
     }
 }

@@ -100,26 +100,29 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void changeRole(Long userId, String role) {
+    public void changeRole(Long userId, String role, String reason) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         user.setRole(Role.valueOf(role.toUpperCase()));
         userRepository.save(user);
+        System.out.println("Role changed for user " + userId + ". Reason: " + reason);
     }
 
     @Override
-    public void deactivateUser(Long userId) {
+    public void deactivateUser(Long userId, String reason) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         user.setIsActive(false);
         userRepository.save(user);
+        System.out.println("User " + userId + " deactivated. Reason: " + reason);
     }
     @Override
-    public void activateUser(Long userId) {
+    public void activateUser(Long userId, String reason) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         user.setIsActive(true);
         userRepository.save(user);
+        System.out.println("User " + userId + " deactivated. Reason: " + reason);
     }
 
     @Override
