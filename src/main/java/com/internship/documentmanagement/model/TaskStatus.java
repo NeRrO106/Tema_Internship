@@ -1,4 +1,8 @@
 package com.internship.documentmanagement.model;
 
-public class TaskStatus {
+public enum TaskStatus {
+    TODO,
+    IN_PROGRESS,
+    DONE,
+    CANCELLED
 }
