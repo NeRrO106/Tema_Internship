@@ -14,22 +14,31 @@ import java.util.Optional;
 @Repository
 public interface TaskRepository extends JpaRepository<Task, Long> {
 
-    List<Task> findByProjectId(Long projectId);
+    @Query("SELECT t FROM Task t JOIN FETCH t.project LEFT JOIN FETCH t.assignedTo JOIN FETCH t.createdBy WHERE t.project.id = :projectId")
+    List<Task> findByProjectId(@Param("projectId") Long projectId);
 
-    List<Task> findByProjectIdAndStatus(Long projectId, TaskStatus status);
+    @Query("SELECT t FROM Task t JOIN FETCH t.project LEFT JOIN FETCH t.assignedTo JOIN FETCH t.createdBy WHERE t.project.id = :projectId AND t.status = :status")
+    List<Task> findByProjectIdAndStatus(@Param("projectId") Long projectId, @Param("status") TaskStatus status);
 
-    List<Task> findByProjectIdAndPriority(Long projectId, TaskPriority priority);
+    @Query("SELECT t FROM Task t JOIN FETCH t.project LEFT JOIN FETCH t.assignedTo JOIN FETCH t.createdBy WHERE t.project.id = :projectId AND t.priority = :priority")
+    List<Task> findByProjectIdAndPriority(@Param("projectId") Long projectId, @Param("priority") TaskPriority priority);
 
-    @Query("SELECT t FROM Task t WHERE t.project.id = :projectId AND t.status = :status AND t.priority = :priority")
+    @Query("SELECT t FROM Task t " +
+            "JOIN FETCH t.project " +
+            "LEFT JOIN FETCH t.assignedTo " +
+            "JOIN FETCH t.createdBy " +
+            "WHERE t.project.id = :projectId " +
+            "AND t.status = :status " +
+            "AND t.priority = :priority")
     List<Task> findByProjectIdStatusAndPriority(
             @Param("projectId") Long projectId,
             @Param("status") TaskStatus status,
             @Param("priority") TaskPriority priority
     );
 
-    List<Task> findByAssignedToId(Long userId);
+    @Query("SELECT t FROM Task t JOIN FETCH t.project LEFT JOIN FETCH t.assignedTo JOIN FETCH t.createdBy WHERE t.assignedTo.id = :userId")
+    List<Task> findByAssignedToId(@Param("userId") Long userId);
 
-    Optional<Task> findByIdAndProjectId(Long taskId, Long projectId);
-
-    Long project(Project project);
+    @Query("SELECT t FROM Task t JOIN FETCH t.project LEFT JOIN FETCH t.assignedTo JOIN FETCH t.createdBy WHERE t.id = :taskId AND t.project.id = :projectId")
+    Optional<Task> findByIdAndProjectId(@Param("taskId") Long taskId, @Param("projectId") Long projectId);
 }

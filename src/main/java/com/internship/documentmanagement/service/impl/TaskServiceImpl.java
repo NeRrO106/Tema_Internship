@@ -32,7 +32,10 @@ public class TaskServiceImpl implements TaskService {
             assignedTo = userRepository.findById(request.getAssignedToId())
                     .orElseThrow(() -> new RuntimeException("Assigned user not found"));
 
-            if (!project.getMembers().contains(assignedTo)) {
+            Project projectWithMembers = projectRepository.findByIdAndDeletedAtIsNull(projectId)
+                    .orElseThrow(() -> new RuntimeException("Project not found"));
+
+            if (!projectWithMembers.getMembers().contains(assignedTo)) {
                 throw new RuntimeException("Assigned user is not a member of this project");
             }
         }
@@ -133,7 +136,10 @@ public class TaskServiceImpl implements TaskService {
             User assignedTo = userRepository.findById(request.getAssignedToId())
                     .orElseThrow(() -> new RuntimeException("Assigned user not found"));
 
-            if (!task.getProject().getMembers().contains(assignedTo)) {
+            Project projectWithMembers = projectRepository.findByIdAndDeletedAtIsNull(projectId)
+                    .orElseThrow(() -> new RuntimeException("Project not found"));
+
+            if (!projectWithMembers.getMembers().contains(assignedTo)) {
                 throw new RuntimeException("Assigned user is not a member of this project");
             }
             task.setAssignedTo(assignedTo);
@@ -162,7 +168,11 @@ public class TaskServiceImpl implements TaskService {
         User assignedUser = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (!task.getProject().getMembers().contains(assignedUser)) {
+        // Re-fetch project with eager-loaded members to avoid LazyInitializationException
+        Project projectWithMembers = projectRepository.findByIdAndDeletedAtIsNull(projectId)
+                .orElseThrow(() -> new RuntimeException("Project not found"));
+
+        if (!projectWithMembers.getMembers().contains(assignedUser)) {
             throw new RuntimeException("User is not a member of this project");
         }
 
