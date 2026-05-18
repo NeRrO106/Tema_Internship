@@ -70,7 +70,7 @@ public class DocumentController {
                 .body(new InputStreamResource(fileStream));
     }
 
-    @DeleteMapping("{/documentId}")
+    @DeleteMapping("/{documentId}")
     public ResponseEntity<Void> deleteDocument(
             @PathVariable Long projectId,
             @PathVariable Long documentId,
