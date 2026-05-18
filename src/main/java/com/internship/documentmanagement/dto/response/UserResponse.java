@@ -16,5 +16,8 @@ public class UserResponse {
     private String email;
     private String role;
     private Boolean isActive;
+    private Boolean twoFactorEnabled;
+    private Boolean twoFactorVerified;
+    private LocalDateTime twoFactorSetupAt;
     private LocalDateTime createdAt;
 }
