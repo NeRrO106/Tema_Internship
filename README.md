@@ -294,7 +294,7 @@ document-management/
 ```
 
 ---
-## 📊 Postman Collection
+## Postman Collection
 Salvat in `POSTMAN_COLLECTION.json`
 
 ## Security Hardening(for frontend)
