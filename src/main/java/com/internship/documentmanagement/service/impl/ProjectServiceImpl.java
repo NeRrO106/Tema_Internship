@@ -7,6 +7,7 @@ import com.internship.documentmanagement.model.ProjectStatus;
 import com.internship.documentmanagement.model.User;
 import com.internship.documentmanagement.repository.ProjectRepository;
 import com.internship.documentmanagement.repository.UserRepository;
+import com.internship.documentmanagement.service.AuditLogService;
 import com.internship.documentmanagement.service.ProjectService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,7 @@ import java.util.stream.Collectors;
 public class ProjectServiceImpl implements ProjectService {
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
+    private final AuditLogService auditLogService;
 
     @Override
     public ProjectResponse createProject(String ownerEmail, ProjectRequest request){
@@ -33,6 +35,8 @@ public class ProjectServiceImpl implements ProjectService {
                 .build();
         project.getMembers().add(owner);
         projectRepository.save(project);
+        auditLogService.logAction(owner.getId(), "PROJECT_CREATE", "PROJECT", project.getId(),
+                "Project created with name: " + project.getName());
         return mapToProjectResponse(project);
     }
 
@@ -79,6 +83,8 @@ public class ProjectServiceImpl implements ProjectService {
         }
 
         projectRepository.save(project);
+        auditLogService.logAction(project.getOwner().getId(), "PROJECT_UPDATE", "PROJECT", project.getId(),
+                "Project details or status updated");
         return mapToProjectResponse(project);
     }
     @Override
@@ -92,6 +98,8 @@ public class ProjectServiceImpl implements ProjectService {
 
         project.setDeletedAt(LocalDateTime.now());
         projectRepository.save(project);
+        auditLogService.logAction(project.getOwner().getId(), "PROJECT_DELETE", "PROJECT", project.getId(),
+                "Project soft-deleted");
     }
 
     @Override
@@ -108,6 +116,8 @@ public class ProjectServiceImpl implements ProjectService {
 
         project.getMembers().add(user);
         projectRepository.save(project);
+        auditLogService.logAction(project.getOwner().getId(), "PROJECT_MEMBER_ADD", "PROJECT", project.getId(),
+                String.format("Added user [ID: %d, Username: %s] to the project", user.getId(), user.getUsername()));
         return mapToProjectResponse(project);
     }
 
@@ -125,6 +135,8 @@ public class ProjectServiceImpl implements ProjectService {
 
         project.getMembers().remove(user);
         projectRepository.save(project);
+        auditLogService.logAction(project.getOwner().getId(), "PROJECT_MEMBER_REMOVE", "PROJECT", project.getId(),
+                String.format("Removed user [ID: %d, Username: %s] from the project", user.getId(), user.getUsername()));
         return mapToProjectResponse(project);
     }
 

@@ -6,6 +6,7 @@ import com.internship.documentmanagement.model.*;
 import com.internship.documentmanagement.repository.TaskRepository;
 import com.internship.documentmanagement.repository.ProjectRepository;
 import com.internship.documentmanagement.repository.UserRepository;
+import com.internship.documentmanagement.service.AuditLogService;
 import com.internship.documentmanagement.service.TaskService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,7 @@ public class TaskServiceImpl implements TaskService {
     private final TaskRepository taskRepository;
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
+    private final AuditLogService auditLogService;
 
     @Override
     public TaskResponse createTask(Long projectId, String creatorEmail, TaskRequest request) {
@@ -52,6 +54,8 @@ public class TaskServiceImpl implements TaskService {
                 .build();
 
         taskRepository.save(task);
+        auditLogService.logAction(creator.getId(), "TASK_CREATE", "TASK", task.getId(),
+                "Created task: " + task.getTitle() + " in project ID: " + projectId);
         return mapToTaskResponse(task);
     }
 
@@ -116,7 +120,7 @@ public class TaskServiceImpl implements TaskService {
         Task task = taskRepository.findByIdAndProjectId(taskId, projectId)
                 .orElseThrow(() -> new RuntimeException("Task not found in this project"));
 
-        userRepository.findByEmail(updaterEmail)
+        User updater = userRepository.findByEmail(updaterEmail)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         task.setTitle(request.getTitle());
@@ -146,6 +150,8 @@ public class TaskServiceImpl implements TaskService {
         }
 
         taskRepository.save(task);
+        auditLogService.logAction(updater.getId(), "TASK_UPDATE", "TASK", task.getId(),
+                "Updated task details/status for task: " + task.getTitle());
         return mapToTaskResponse(task);
     }
 
@@ -154,9 +160,11 @@ public class TaskServiceImpl implements TaskService {
         Task task = taskRepository.findByIdAndProjectId(taskId, projectId)
                 .orElseThrow(() -> new RuntimeException("Task not found in this project"));
 
-        userRepository.findByEmail(deleterEmail)
+        User deleter = userRepository.findByEmail(deleterEmail)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        auditLogService.logAction(deleter.getId(), "TASK_DELETE", "TASK", taskId,
+                "Hard-deleted task with title: " + task.getTitle() + " from project ID: " + projectId);
         taskRepository.delete(task);
     }
 
@@ -165,10 +173,12 @@ public class TaskServiceImpl implements TaskService {
         Task task = taskRepository.findByIdAndProjectId(taskId, projectId)
                 .orElseThrow(() -> new RuntimeException("Task not found in this project"));
 
+        User assigner = userRepository.findByEmail(assignerEmail)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
         User assignedUser = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Re-fetch project with eager-loaded members to avoid LazyInitializationException
         Project projectWithMembers = projectRepository.findByIdAndDeletedAtIsNull(projectId)
                 .orElseThrow(() -> new RuntimeException("Project not found"));
 
@@ -177,6 +187,8 @@ public class TaskServiceImpl implements TaskService {
         }
 
         task.setAssignedTo(assignedUser);
+        auditLogService.logAction(assigner.getId(), "TASK_ASSIGN", "TASK", task.getId(),
+                "Assigned task to user: " + assignedUser.getUsername());
         taskRepository.save(task);
     }
 
@@ -185,8 +197,15 @@ public class TaskServiceImpl implements TaskService {
         Task task = taskRepository.findByIdAndProjectId(taskId, projectId)
                 .orElseThrow(() -> new RuntimeException("Task not found in this project"));
 
+        User assigner = userRepository.findByEmail(assignerEmail)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        String previousAssignee = task.getAssignedTo() != null ? task.getAssignedTo().getUsername() : "None";
+
         task.setAssignedTo(null);
         taskRepository.save(task);
+        auditLogService.logAction(assigner.getId(), "TASK_UNASSIGN", "TASK", task.getId(),
+                "Unassigned task. Previous assignee was: " + previousAssignee);
     }
 
     private TaskResponse mapToTaskResponse(Task task) {

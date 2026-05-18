@@ -8,6 +8,7 @@ import com.internship.documentmanagement.model.Role;
 import com.internship.documentmanagement.model.User;
 import com.internship.documentmanagement.repository.UserRepository;
 import com.internship.documentmanagement.security.JwtService;
+import com.internship.documentmanagement.service.AuditLogService;
 import com.internship.documentmanagement.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -21,53 +22,8 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JwtService jwtService;
+    private final AuditLogService auditLogService;
 
-    @Override
-    public AuthResponse register(RegisterRequest request){
-        if(userRepository.existsByEmail(request.getEmail())){
-            throw new RuntimeException("Email already in use");
-        }
-        if(userRepository.existsByUsername(request.getUsername())){
-            throw new RuntimeException("Username already in use");
-        }
-
-        User user = User.builder()
-                .username(request.getUsername())
-                .email(request.getEmail())
-                .passwordHash(passwordEncoder.encode(request.getPassword()))
-                .role(Role.USER)
-                .isActive(true)
-                .build();
-        userRepository.save(user);
-
-        String token = jwtService.generateToken(user.getEmail(), user.getRole().name());
-
-        return AuthResponse.builder()
-                .token(token)
-                .username(user.getUsername())
-                .role(user.getRole().name())
-                .build();
-    }
-
-    @Override
-    public AuthResponse login(LoginRequest request){
-        User user = userRepository.findByEmail(request.getEmail()).orElseThrow(() -> new RuntimeException("Invalid credentials"));
-
-        if(!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())){
-            throw new RuntimeException("Invalid credentials");
-        }
-
-        if(!user.getIsActive()){
-            throw new RuntimeException("Account is deactivated");
-        }
-        String token = jwtService.generateToken(user.getEmail(), user.getRole().name());
-        return AuthResponse.builder()
-                .token(token)
-                .username(user.getUsername())
-                .role(user.getRole().name())
-                .build();
-    }
     @Override
     public UserResponse getProfile(Long userId) {
         User user = userRepository.findById(userId)
@@ -88,6 +44,7 @@ public class UserServiceImpl implements UserService {
         }
 
         userRepository.save(user);
+        auditLogService.logAction(userId, "PROFILE_UPDATE", "USER", userId, "Profile updated by user");
         return mapToUserResponse(user);
     }
 
@@ -103,9 +60,11 @@ public class UserServiceImpl implements UserService {
     public void changeRole(Long userId, String role, String reason) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+        String oldRole = user.getRole().name();
         user.setRole(Role.valueOf(role.toUpperCase()));
         userRepository.save(user);
-        System.out.println("Role changed for user " + userId + ". Reason: " + reason);
+        auditLogService.logAction(null, "ROLE_CHANGE", "USER", userId,
+                String.format("Role changed from %s to %s. Reason: %s", oldRole, role, reason));
     }
 
     @Override
@@ -114,7 +73,7 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
         user.setIsActive(false);
         userRepository.save(user);
-        System.out.println("User " + userId + " deactivated. Reason: " + reason);
+        auditLogService.logAction(null, "USER_DEACTIVATE", "USER", userId, "Reason: " + reason);
     }
     @Override
     public void activateUser(Long userId, String reason) {
@@ -122,7 +81,7 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
         user.setIsActive(true);
         userRepository.save(user);
-        System.out.println("User " + userId + " deactivated. Reason: " + reason);
+        auditLogService.logAction(null, "USER_ACTIVATE", "USER", userId, "Reason: " + reason);
     }
 
     @Override
@@ -130,6 +89,19 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         return mapToUserResponse(user);
+    }
+
+    @Override
+    public Long getUserIdByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"))
+                .getId();
+    }
+
+    @Override
+    public User getUserByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
     @Override
@@ -145,6 +117,7 @@ public class UserServiceImpl implements UserService {
         }
 
         userRepository.save(user);
+        auditLogService.logAction(user.getId(), "PROFILE_UPDATE", "USER", user.getId(), "Profile updated via email endpoint");
         return mapToUserResponse(user);
     }
 
