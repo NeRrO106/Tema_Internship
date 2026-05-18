@@ -21,12 +21,14 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping("/me")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<UserResponse> getProfile(Authentication authentication){
         String email = authentication.getName();
         return ResponseEntity.ok(userService.getProfileByEmail(email));
     }
 
     @PutMapping("/me")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<UserResponse> updateProfile(Authentication authentication, @Valid @RequestBody RegisterRequest request){
         String email = authentication.getName();
         return ResponseEntity.ok(userService.updateProfileByEmail(email, request));
