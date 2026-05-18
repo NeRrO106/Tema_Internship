@@ -35,6 +35,18 @@ public class User {
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 
+    @Column(length = 255)
+    private String totpSecret;
+
+    @Column
+    private Boolean twoFactorEnabled = false;
+
+    @Column
+    private Boolean twoFactorVerified = false;
+
+    @Column
+    private LocalDateTime twoFactorSetupAt;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
