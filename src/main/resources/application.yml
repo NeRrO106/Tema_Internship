@@ -3,9 +3,9 @@ spring:
     name: document-management
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/docmanagement
-    username: admin
-    password: admin123
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/docmanagement}
+    username: ${DB_USERNAME:admin}
+    password: ${DB_PASSWORD:admin123}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -26,5 +26,11 @@ server:
   port: 8080
 
 jwt:
-  secret: "3f8b2c1d9e4a7f6b0c5d2e1a8f3b9c4d7e0a1f2b5c8d3e6f9a0b1c2d3e4f5a6b"
+  secret: ${JWT_SECRET}
   expiration: 86400000
+
+minio:
+  url: ${MINIO_URL:http://localhost:9000}
+  access-key: ${MINIO_ACCESS_KEY:minioadmin}
+  secret-key: ${MINIO_SECRET_KEY:minioadmin123}
+  bucket-name: documents
